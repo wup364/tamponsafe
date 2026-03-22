@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="卫生棉条使用记录与防忘提醒系统 - 保护您的健康">
+  <title>TamponSafe - 卫生棉条防忘提醒</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #e91e63;
+      --primary-light: #f8bbd9;
+      --success: #4caf50;
+      --success-light: #c8e6c9;
+      --warning: #ff9800;
+      --warning-light: #ffe0b2;
+      --danger: #f44336;
+      --danger-light: #ffcdd2;
+      --background: #fff5f8;
+      --card-bg: #ffffff;
+      --text-primary: #333333;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --border-radius: 16px;
+      --shadow: 0 4px 20px rgba(233, 30, 99, 0.15);
+      --shadow-lg: 0 8px 30px rgba(233, 30, 99, 0.25);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #1a1a2e;
+        --card-bg: #16213e;
+        --text-primary: #eeeeee;
+        --text-secondary: #aaaaaa;
+        --text-muted: #666666;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0 30px;
+    }
+
+    .logo {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .status-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status-card.warning {
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 30px rgba(244, 67, 54, 0.4);
+    }
+
+    .status-card.critical {
+      animation: flash 1s infinite;
+      box-shadow: 0 0 40px rgba(244, 67, 54, 0.6);
+      background: linear-gradient(135deg, var(--danger) 0%, #c62828 100%);
+      color: white;
+    }
+
+    .status-card.critical h2,
+    .status-card.critical .timer-label,
+    .status-card.critical .timer-value {
+      color: white;
+    }
+
+    .status-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .status-badge.active {
+      background: var(--warning);
+      color: white;
+    }
+
+    .status-badge.idle {
+      background: var(--success);
+      color: white;
+    }
+
+    .status-card h2 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    .status-description {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .timer-section {
+      margin: 20px 0;
+      padding: 16px;
+      background: var(--background);
+      border-radius: 12px;
+    }
+
+    .timer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .timer-row:last-child {
+      border-bottom: none;
+    }
+
+    .timer-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .timer-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .timer-value.critical {
+      color: white;
+      font-size: 24px;
+      animation: shake 0.5s ease-in-out infinite;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 18px 24px;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      touch-action: manipulation;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #c2185b 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(233, 30, 99, 0.5);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success) 0%, #388e3c 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger) 0%, #c62828 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--card-bg);
+      color: var(--text-secondary);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-small {
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--text-muted);
+      color: var(--text-muted);
+      box-shadow: none;
+    }
+
+    .btn-danger .btn-outline {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .btn-disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-disabled * {
+      pointer-events: none;
+    }
+
+    .history-section {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-top: auto;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--background);
+    }
+
+    .history-header h3 {
+      font-size: 18px;
+      color: var(--text-primary);
+    }
+
+    .clear-all-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: var(--background);
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .history-item:hover {
+      transform: translateX(4px);
+    }
+
+    .history-date {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .history-times {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+      .history-duration {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--warning);
+        white-space: nowrap;
+      }
+
+      .history-note {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .history-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        margin: 2px;
+        background: var(--primary-light);
+        color: var(--primary);
+      }
+
+      .remove-confirm-section {
+        margin-top: 16px;
+      }
+
+      .tag-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .tag-option {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 10px 8px;
+        background: var(--background);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        user-select: none;
+      }
+
+      .tag-option:hover {
+        background: var(--primary-light);
+      }
+
+      .tag-option.selected {
+        border-color: var(--primary);
+        background: var(--primary-light);
+      }
+
+      .note-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        font-size: 14px;
+        font-family: inherit;
+        resize: none;
+        background: var(--background);
+        color: var(--text-primary);
+        margin: 12px 0;
+      }
+
+      .note-input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .note-char-count {
+        text-align: right;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+
+    .empty-history {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-muted);
+    }
+
+    .empty-history span {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      transform: scale(0.8);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .modal-body p {
+      margin-bottom: 12px;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal-actions .btn {
+      min-height: 48px;
+    }
+
+    .modal-actions .btn + .btn {
+      margin-top: 4px;
+    }
+
+    .modal-danger .modal-title {
+      color: var(--danger);
+    }
+
+    .disclaimer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 15px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+
+    .settings-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 10px 0;
+      margin-bottom: 10px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 2000;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .toast.success {
+      background: rgba(76, 175, 80, 0.9);
+    }
+
+    .toast.error {
+      background: rgba(244, 67, 54, 0.9);
+    }
+
+    .toast.warning {
+      background: rgba(255, 152, 0, 0.9);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* 统计卡片样式 */
+    .stats-section {
+      margin-bottom: 16px;
+    }
+
+    .stats-card {
+      background: linear-gradient(135deg, var(--primary-light) 0%, #f8bbd9 100%);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stats-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .stats-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stats-subtitle {
+      font-size: 11px;
+      color: var(--text-secondary);
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 360px) {
+      .container {
+        padding: 15px;
+      }
+
+      .btn {
+        padding: 16px 20px;
+        font-size: 16px;
+      }
+
+      .timer-value {
+        font-size: 18px;
+      }
+
+      .stats-card {
+        padding: 10px 12px;
+      }
+
+      .stats-label {
+        font-size: 12px;
+      }
+
+      .stats-value {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">🌸</div>
+      <h1>TamponSafe</h1>
+      <p class="subtitle">卫生棉条防忘提醒系统</p>
+    </header>
+
+    <div class="status-card" id="statusCard">
+      <div class="status-icon" id="statusIcon">💤</div>
+      <span class="status-badge idle" id="statusBadge">空闲</span>
+      <h2 id="statusTitle">当前安全，体内无棉条</h2>
+      <p class="status-description" id="statusDescription">您可以随时记录新的使用</p>
+
+      <div class="timer-section" id="timerSection" style="display: none;">
+        <div class="timer-row">
+          <span class="timer-label">已放置时长</span>
+          <span class="timer-value" id="elapsedTime">0 小时 0 分钟</span>
+        </div>
+        <div class="timer-row">
+          <span class="timer-label">距离建议取出时间</span>
+          <span class="timer-value" id="remainingTime">剩余 8 小时</span>
+        </div>
+      </div>
+
+      <div class="critical-alert" id="criticalAlert" style="display: none;">
+        <p style="color: white; font-weight: 700; font-size: 16px;">
+          ⚠️ 严重警告：已超过 8 小时！请立即取出！<br>
+          <span style="font-size: 14px; font-weight: 400;">存在 TSS（中毒性休克综合征）风险</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="action-buttons" id="actionButtons">
+      <button class="btn btn-success" id="insertBtn">
+        <span>+</span> 刚塞入一根
+      </button>
+      <button class="btn btn-danger" id="removeBtn" style="display: none;">
+        <span>✕</span> 已取出
+      </button>
+    </div>
+
+    <div class="settings-bar">
+      <button class="btn btn-small btn-secondary" id="notifyBtn">
+        🔔 启用提醒
+      </button>
+      <button class="btn btn-small btn-outline" id="historyExpandBtn">
+        📋 展开历史记录
+      </button>
+    </div>
+
+    <div class="history-section" id="historySection">
+      <div class="history-header">
+        <h3>📋 历史记录</h3>
+        <button class="clear-all-btn" id="clearAllBtn">清空全部</button>
+      </div>
+      
+      <!-- 平均时长统计 -->
+      <div class="stats-section" id="statsSection">
+        <div class="stats-card">
+          <div class="stats-label">平均放置时长</div>
+          <div class="stats-value" id="avgDuration">-</div>
+        </div>
+      </div>
+      
+      <div class="history-list" id="historyList">
+        <div class="empty-history">
+          <span>📝</span>
+          <p>暂无历史记录</p>
+          <p style="font-size: 12px; margin-top: 8px;">记录将在这里显示</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ 免责声明：本工具仅为提醒辅助，不能替代医疗建议。如有不适请立即就医。<br>
+      💡 数据存储在本地，请勿清除浏览器缓存
+    </div>
+  </div>
+
+  <!-- Insert Modal -->
+  <div class="modal-overlay" id="insertModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span style="font-size: 32px;">✅</span>
+        <h3 class="modal-title">记录成功</h3>
+      </div>
+      <div class="modal-body">
+        <p>已成功记录新的棉条使用</p>
+        <p>⏰ <strong>开始时间：</strong><span id="insertTime"></span></p>
+        <p style="color: var(--warning);">🔔 建议 <strong>4-8 小时</strong> 内取出</p>
+        <p style="font-size: 13px; color: var(--text-muted);">系统将为您自动计时提醒</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeModal('insertModal')">好的</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Double Insert Warning Modal -->
+  <div class="modal-overlay" id="doubleWarningModal">
+    <div class="modal modal-danger">
+      <div class="modal-header">
+        <span style="font-size: 32px;">❌</span>
+        <h3 class="modal-title">错误：双重棉条风险</h3>
+      </div>
+      <div class="modal-body">
+        <p><strong>体内已有棉条正在使用！</strong></p>
+        <p>已放置 <span id="existingDuration" style="color: var(--danger); font-weight: 700;"></span></p>
+        <p style="color: var(--danger); font-weight: 600;">
+          ⚠️ 再次塞入可能导致双重棉条，引发严重健康风险！
+        </p>
+        <p style="font-size: 13px;">请先取出旧棉条后再记录新的。</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" onclick="closeModal('doubleWarningModal')">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Early Remove Warning Modal -->
+  <div class="modal-overlay" id="earlyRemoveModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span style="font-size: 32px;">⏰</span>
+        <h3 class="modal-title">提前取出确认</h3>
+      </div>
+      <div class="modal-body">
+        <p>棉条使用时长较短，请确认是否需要取出？</p>
+        <p>已放置：<span id="earlyRemoveDuration" style="font-weight: 700;"></span></p>
+        <p style="font-size: 13px; color: var(--text-muted);">建议使用 4-8 小时以获得最佳效果</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('earlyRemoveModal')">再想想</button>
+        <button class="btn btn-primary" id="confirmEarlyRemove">确认取出</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Critical Remove Warning Modal -->
+  <div class="modal-overlay" id="criticalRemoveModal">
+    <div class="modal modal-danger">
+      <div class="modal-header">
+        <span style="font-size: 32px;">🚨</span>
+        <h3 class="modal-title">严重超时警告</h3>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--danger); font-weight: 700;">⚠️ 已超过安全使用时长！</p>
+        <p>已放置：<span id="criticalRemoveDuration" style="font-weight: 700; font-size: 18px;"></span></p>
+        <p style="color: var(--danger); font-weight: 600;">
+          🚨 TSS（中毒性休克综合征）风险！
+        </p>
+        <p style="font-size: 13px;">请立即取出，如有不适请尽快就医。</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('criticalRemoveModal')">再确认一下</button>
+        <button class="btn btn-danger" id="confirmCriticalRemove" style="margin-top: 10px;">✅ 确认已取出</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span style="font-size: 32px;">⚙️</span>
+        <h3 class="modal-title">设置</h3>
+      </div>
+      <div class="modal-body">
+        <p>提醒设置已启用。</p>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          系统将在 <strong>4 小时</strong> 和 <strong>8 小时</strong> 节点发送通知提醒。
+        </p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeModal('settingsModal')">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Remove Modal with Tags and Notes -->
+  <div class="modal-overlay" id="confirmRemoveModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span style="font-size: 32px;">✅</span>
+        <h3 class="modal-title">记录取出</h3>
+      </div>
+      <div class="modal-body">
+        <p>本次已放置：<span id="confirmRemoveDuration" style="font-weight: 700;"></span></p>
+        
+        <div class="remove-confirm-section">
+          <p style="font-size: 13px; margin-bottom: 8px;">🏷️ 选择标签（可选）：</p>
+          <div class="tag-grid" id="tagGrid"></div>
+        </div>
+
+        <div class="remove-confirm-section">
+          <p style="font-size: 13px; margin-bottom: 8px;">📝 备注（可选，最多 20 字）：</p>
+          <textarea 
+            class="note-input" 
+            id="noteInput" 
+            placeholder="输入您的感受或状态..." 
+            maxlength="20"
+            rows="2"
+          ></textarea>
+          <div class="note-char-count"><span id="charCount">0</span>/20</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('confirmRemoveModal')">取消</button>
+        <button class="btn btn-primary" id="confirmRemoveBtn">确认完成</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ============================================
+    // 数据管理
+    // ============================================
+    const STORAGE_KEY = 'tamponsafe_data';
+    
+    // 标签配置
+    const TAGS = [
+      { id: 'normal', label: '🌸 正常', emoji: '🌸' },
+      { id: 'heavy', label: '🔴 量多', emoji: '🔴' },
+      { id: 'light', label: '🔵 量少', emoji: '🔵' },
+      { id: 'painful', label: '😣 腹痛', emoji: '😣' },
+      { id: 'dry', label: '💧 干涩', emoji: '💧' },
+      { id: 'comfort', label: '😊 舒适', emoji: '😊' },
+      { id: 'leak', label: '💦 漏液', emoji: '💦' },
+      { id: 'active', label: '💪 运动', emoji: '💪' },
+      { id: 'sleep', label: '😴 睡眠', emoji: '😴' }
+    ];
+
+    const DEFAULT_SETTINGS = {
+      warningThreshold: 8,
+      reminderEnabled: false
+    };
+
+    let appData = {
+      lastSync: new Date().toISOString(),
+      currentStatus: 'idle',
+      startTime: null,
+      history: [],
+      settings: { ...DEFAULT_SETTINGS }
+    };
+
+    let pendingAction = null;
+
+    // 当前选择的标签
+    let selectedTags = [];
+    let removeCallback = null;
+
+    // 加载数据
+    function loadData() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          appData = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error('加载数据失败:', e);
+        appData = { ...appData, ...JSON.parse(stored) };
+      }
+    }
+
+    // 保存数据
+    function saveData() {
+      appData.lastSync = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    // 计算时长（小时，带小数）
+    function calculateDuration(start, end = null) {
+      if (!start) return 0;
+      const durationMs = (end || Date.now()) - start;
+      return durationMs / (1000 * 60 * 60);
+    }
+
+    // 格式化时长为中文
+    function formatDuration(hours, includeMinutes = true) {
+      if (hours < 0) hours = 0;
+      const h = Math.floor(hours);
+      const m = Math.round((hours - h) * 60);
+      let result = '';
+      if (h > 0) {
+        result = `${h}小时`;
+      }
+      if (includeMinutes) {
+        // 始终显示分钟，即使为 0
+        result += result ? ' ' : '';
+        result += `${m}分钟`;
+      }
+      return result || '0 分钟';
+    }
+
+    // 格式化日期
+    function formatDate(timestamp) {
+      const d = new Date(timestamp);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hour = String(d.getHours()).padStart(2, '0');
+      const minute = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hour}:${minute}`;
+    }
+
+    // 检查是否需要恢复使用状态（上次关闭前是活跃状态）
+    function checkRestoredState() {
+      if (appData.currentStatus === 'active' && appData.startTime) {
+        const hours = calculateDuration(appData.startTime);
+        if (hours > 8) {
+          showToast('⚠️ 检测到棉条已放置超过 8 小时！请立即取出！', 'error');
+          setTimeout(() => requestNotificationPermission(), 2000);
+        } else if (hours >= 4) {
+          showToast('⏰ 棉条已使用超过 4 小时，请及时取出！', 'warning');
+        }
+      }
+    }
+
+    // ============================================
+    // 通知系统
+    // ============================================
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        showToast('⚠️ 您的浏览器不支持通知功能', 'warning');
+        return false;
+      }
+
+      if (Notification.permission === 'granted') {
+        appData.settings.reminderEnabled = true;
+        saveData();
+        showToast('✅ 通知已启用', 'success');
+        return true;
+      }
+
+      if (Notification.permission === 'denied') {
+        showToast('⚠️ 通知权限已被拒绝，请在浏览器设置中开启', 'warning');
+        return false;
+      }
+
+      try {
+        const permission = await Notification.requestPermission();
+        appData.settings.reminderEnabled = (permission === 'granted');
+        saveData();
+        return permission === 'granted';
+      } catch (e) {
+        console.error('请求通知权限失败:', e);
+        return false;
+      }
+    }
+
+    function sendNotification(title, options) {
+      if (Notification.permission === 'granted') {
+        new Notification(title, options);
+      }
+    }
+
+    // ============================================
+    // UI 更新
+    // ============================================
+    function updateUI() {
+      const statusCard = document.getElementById('statusCard');
+      const statusIcon = document.getElementById('statusIcon');
+      const statusBadge = document.getElementById('statusBadge');
+      const statusTitle = document.getElementById('statusTitle');
+      const statusDescription = document.getElementById('statusDescription');
+      const timerSection = document.getElementById('timerSection');
+      const elapsedTime = document.getElementById('elapsedTime');
+      const remainingTime = document.getElementById('remainingTime');
+      const criticalAlert = document.getElementById('criticalAlert');
+      const insertBtn = document.getElementById('insertBtn');
+      const removeBtn = document.getElementById('removeBtn');
+      const notifyBtn = document.getElementById('notifyBtn');
+
+      if (appData.currentStatus === 'active' && appData.startTime) {
+        const hours = calculateDuration(appData.startTime);
+        const isWarning = hours > 8;
+
+        // 更新状态卡片
+        statusCard.className = 'status-card' + (isWarning ? ' warning critical' : ' warning');
+        statusIcon.textContent = isWarning ? '🚨' : '⏰';
+        statusBadge.textContent = '使用中';
+        statusBadge.className = 'status-badge active';
+        statusTitle.textContent = isWarning ? '已超过 8 小时！' : '棉条正在使用中';
+        statusDescription.textContent = isWarning ? '请立即取出，避免健康风险' : '系统将持续为您计时提醒';
+
+        // 显示计时器
+        timerSection.style.display = 'block';
+        elapsedTime.textContent = formatDuration(hours) + ' (精确：' + formatTimePrecise(appData.startTime) + ')';
+        const remaining = Math.max(0, appData.settings.warningThreshold - hours);
+        remainingTime.textContent = '剩余 ' + formatDuration(remaining, true);
+
+        // 显示警告
+        criticalAlert.style.display = isWarning ? 'block' : 'none';
+
+        // 更新按钮
+        insertBtn.style.display = 'none';
+        removeBtn.style.display = 'flex';
+      } else {
+        // 空闲状态
+        statusCard.className = 'status-card';
+        statusIcon.textContent = '💤';
+        statusBadge.textContent = '空闲';
+        statusBadge.className = 'status-badge idle';
+        statusTitle.textContent = '当前安全，体内无棉条';
+        statusDescription.textContent = '您可以随时记录新的使用';
+
+        timerSection.style.display = 'none';
+        criticalAlert.style.display = 'none';
+
+        insertBtn.style.display = 'flex';
+        removeBtn.style.display = 'none';
+      }
+
+      // 更新通知按钮状态
+      notifyBtn.textContent = appData.settings.reminderEnabled ? '🔔 提醒已启用' : '🔔 启用提醒';
+      notifyBtn.className = 'btn btn-small ' + (appData.settings.reminderEnabled ? 'btn-success' : 'btn-secondary');
+
+      updateHistoryUI();
+      saveData();
+    }
+
+    function formatTimePrecise(timestamp) {
+      const now = Date.now();
+      const start = new Date(timestamp);
+      const end = new Date();
+      return `${start.getHours()}:${String(start.getMinutes()).padStart(2, '0')} - ${end.getHours()}:${String(end.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // 更新平均时长统计
+    function updateStatsUI() {
+      const avgDurationEl = document.getElementById('avgDuration');
+      
+      if (!avgDurationEl) return;
+      
+      if (appData.history.length === 0) {
+        avgDurationEl.textContent = '-';
+        return;
+      }
+      
+      // 计算平均时长
+      const totalHours = appData.history.reduce((sum, record) => sum + record.durationHours, 0);
+      const avgHours = totalHours / appData.history.length;
+      
+      avgDurationEl.textContent = formatDuration(avgHours, true);
+    }
+
+    function updateHistoryUI() {
+      const historyList = document.getElementById('historyList');
+      const recentHistory = appData.history.slice(-10).reverse();
+      
+      // 更新统计
+      updateStatsUI();
+
+      if (recentHistory.length === 0) {
+        historyList.innerHTML = `
+          <div class="empty-history">
+            <span>📝</span>
+            <p>暂无历史记录</p>
+            <p style="font-size: 12px; margin-top: 8px;">记录将在这里显示</p>
+          </div>
+        `;
+        return;
+      }
+
+      historyList.innerHTML = recentHistory.map(item => {
+        let tagHtml = '';
+        if (item.tags && item.tags.length > 0) {
+          tagHtml = item.tags.map(tagId => {
+            const tag = TAGS.find(t => t.id === tagId);
+            return tag ? `<span class="history-tag">${tag.emoji}${tag.label.replace(tag.emoji, '').trim()}</span>` : '';
+          }).join('');
+        }
+        let noteHtml = item.note ? `<div class="history-note">${item.note}</div>` : '';
+        
+        return `
+        <div class="history-item">
+          <div>
+            <div class="history-date">${formatDate(item.start).split(' ')[0]}</div>
+            <div class="history-times">${formatDate(item.start).split(' ')[1]} → ${formatDate(item.end).split(' ')[1]}</div>
+            ${tagHtml ? `<div class="history-tags">${tagHtml}</div>` : ''}
+            ${noteHtml}
+          </div>
+          <div class="history-duration">${formatDuration(item.durationHours)}</div>
+        </div>
+        `;
+      }).join('');
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast show ' + type;
+      setTimeout(() => {
+        toast.className = 'toast';
+      }, 3000);
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // ============================================
+    // 核心操作
+    // ============================================
+    function handleInsert() {
+      if (appData.currentStatus === 'active' && appData.startTime) {
+        const hours = calculateDuration(appData.startTime);
+        document.getElementById('existingDuration').textContent = formatDuration(hours);
+        openModal('doubleWarningModal');
+        return;
+      }
+
+      appData.currentStatus = 'active';
+      appData.startTime = Date.now();
+      
+      document.getElementById('insertTime').textContent = formatDate(appData.startTime);
+      openModal('insertModal');
+      
+      updateUI();
+
+      if (appData.settings.reminderEnabled) {
+        checkReminders();
+      }
+    }
+
+    function handleRemove() {
+      if (appData.currentStatus !== 'active' || !appData.startTime) {
+        showToast('当前无棉条，无需操作', 'warning');
+        return;
+      }
+
+      const hours = calculateDuration(appData.startTime);
+
+      if (hours < 4) {
+        document.getElementById('earlyRemoveDuration').textContent = formatDuration(hours);
+        pendingAction = 'earlyRemove';
+        openModal('earlyRemoveModal');
+      } else if (hours > 8) {
+        document.getElementById('criticalRemoveDuration').textContent = formatDuration(hours);
+        pendingAction = 'criticalRemove';
+        openModal('criticalRemoveModal');
+      } else {
+        // 正常时间段（4-8 小时）打开带标签和备注的确认框
+        openConfirmRemoveModal(hours, (tags, note) => {
+          confirmRemove(tags, note);
+        });
+      }
+    }
+
+    // 在确认后（提前取出/超时取出）打开带标签和备注的确认框
+    function openConfirmRemoveModalAfterWarning(tags, note) {
+      // 这里的 tags 和 note 来自用户的选择，传入到 confirmRemove
+      confirmRemove(tags, note);
+    }
+
+    // 提前取出确认后打开带标签和备注的确认框
+    function handleEarlyRemoveConfirm() {
+      closeModal('earlyRemoveModal');
+      handleRemoveWithTagsAndNotes();
+    }
+
+    // 超取出确认后打开带标签和备注的确认框
+    function handleCriticalRemoveConfirm() {
+      closeModal('criticalRemoveModal');
+      handleRemoveWithTagsAndNotes();
+    }
+
+    // 统一的带标签和备注的处理函数
+    function handleRemoveWithTagsAndNotes() {
+      const hours = calculateDuration(appData.startTime);
+      openConfirmRemoveModal(hours, (tags, note) => {
+        confirmRemove(tags, note);
+      });
+    }
+
+    // 打开确认取出模态框
+    function openConfirmRemoveModal(duration, callback) {
+      document.getElementById('confirmRemoveDuration').textContent = formatDuration(duration);
+      selectedTags = [];
+      
+      // 生成标签网格
+      const tagGrid = document.getElementById('tagGrid');
+      tagGrid.innerHTML = TAGS.map(tag => `
+        <div class="tag-option" data-tag-id="${tag.id}">
+          <span>${tag.emoji}</span>
+          <span>${tag.label.replace(tag.emoji, '').trim()}</span>
+        </div>
+      `).join('');
+
+      // 标签点击事件
+      tagGrid.querySelectorAll('.tag-option').forEach(option => {
+        option.addEventListener('click', () => {
+          const tagId = option.dataset.tagId;
+          const tag = TAGS.find(t => t.id === tagId);
+          
+          if (selectedTags.includes(tagId)) {
+            // 取消选择
+            selectedTags = selectedTags.filter(id => id !== tagId);
+            option.classList.remove('selected');
+          } else {
+            // 选择标签
+            selectedTags.push(tagId);
+            option.classList.add('selected');
+          }
+        });
+      });
+
+      // 备注输入事件
+      const noteInput = document.getElementById('noteInput');
+      const charCount = document.getElementById('charCount');
+      noteInput.value = '';
+      charCount.textContent = '0';
+      noteInput.addEventListener('input', () => {
+        charCount.textContent = noteInput.value.length;
+      });
+
+      // 绑定确认按钮
+      const confirmBtn = document.getElementById('confirmRemoveBtn');
+      confirmBtn.onclick = () => {
+        const note = noteInput.value.trim();
+        closeModal('confirmRemoveModal');
+        if (callback) callback(selectedTags, note);
+      };
+
+      openModal('confirmRemoveModal');
+    }
+
+    function confirmRemove(tags = [], note = '') {
+      if (!appData.startTime) return;
+
+      const end = Date.now();
+      const duration = calculateDuration(appData.startTime, end);
+      const start = appData.startTime;
+
+      const record = {
+        id: Date.now(),
+        start: start,
+        end: end,
+        durationHours: duration,
+        date: new Date(start).toISOString().split('T')[0],
+        tags: tags,
+        note: note
+      };
+
+      appData.history.push(record);
+      appData.currentStatus = 'idle';
+      appData.startTime = null;
+
+      updateUI();
+      let msg = '✅ 已记录取出，时间：' + formatDuration(duration);
+      if (tags.length > 0) {
+        msg += ' ' + tags.map(id => {
+          const tag = TAGS.find(t => t.id === id);
+          return tag ? tag.emoji + tag.label.replace(tag.emoji, '').trim() : '';
+        }).filter(Boolean).join(' ');
+      }
+      if (note) {
+        msg += ' - ' + note;
+      }
+      showToast(msg, 'success');
+
+      if (duration > 8) {
+        sendNotification('⚠️ 超时警告', {
+          body: '您的棉条已使用超过 8 小时，请及时取出避免健康风险。',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🚨</text></svg>'
+        });
+      }
+    }
+
+    // ============================================
+    // 提醒系统
+    // ============================================
+    function checkReminders() {
+      if (appData.currentStatus !== 'active' || !appData.startTime) return;
+
+      const hours = calculateDuration(appData.startTime);
+
+      // 检查 4 小时提醒
+      if (hours >= 4 && hours < 4.1) {
+        sendNotification('⏰ 提醒', {
+          body: '您的棉条已使用 4 小时，可以考虑取出了。',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⏰</text></svg>'
+        });
+        showToast('⏰ 已使用 4 小时，建议考虑取出', 'warning');
+      }
+
+      // 检查 8 小时提醒
+      if (hours >= 8 && hours < 8.1) {
+        sendNotification('🚨 严重警告', {
+          body: '您的棉条已使用 8 小时，请立即取出！存在健康风险。',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🚨</text></svg>'
+        });
+        showToast('🚨 已使用 8 小时，请立即取出！', 'error');
+      }
+    }
+
+    // 定期检查提醒
+    function startReminderChecker() {
+      setInterval(checkReminders, 60000); // 每分钟检查一次
+    }
+
+    // 每 30 秒刷新计时显示
+    function startTimerUpdater() {
+      setInterval(() => {
+        if (appData.currentStatus === 'active' && appData.startTime) {
+          updateTimerDisplay();
+        }
+      }, 30000); // 每 30 秒刷新一次
+    }
+
+    function updateTimerDisplay() {
+      const elapsedTime = document.getElementById('elapsedTime');
+      const remainingTime = document.getElementById('remainingTime');
+      
+      if (elapsedTime && remainingTime && appData.startTime) {
+        const hours = calculateDuration(appData.startTime);
+        elapsedTime.textContent = formatDuration(hours) + ' (精确：' + formatTimePrecise(appData.startTime) + ')';
+        const remaining = Math.max(0, appData.settings.warningThreshold - hours);
+        remainingTime.textContent = '剩余 ' + formatDuration(remaining, true);
+      }
+    }
+
+    // ============================================
+    // 事件绑定
+    // ============================================
+    function bindEvents() {
+      document.getElementById('insertBtn').addEventListener('click', handleInsert);
+      document.getElementById('removeBtn').addEventListener('click', handleRemove);
+      document.getElementById('notifyBtn').addEventListener('click', () => requestNotificationPermission());
+      document.getElementById('clearAllBtn').addEventListener('click', () => {
+        if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
+          appData.history = [];
+          updateUI();
+          showToast('✅ 历史记录已清空', 'success');
+        }
+      });
+      document.getElementById('historyExpandBtn').addEventListener('click', () => {
+        document.getElementById('historySection').scrollIntoView({ behavior: 'smooth' });
+      });
+
+      // 确认提前取出（打开带标签和备注的确认框）
+      document.getElementById('confirmEarlyRemove').addEventListener('click', handleEarlyRemoveConfirm);
+
+      // 确认超取出（打开带标签和备注的确认框）
+      document.getElementById('confirmCriticalRemove').addEventListener('click', handleCriticalRemoveConfirm);
+
+      // 窗口可见性检查（用户返回页面时检查）
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && appData.currentStatus === 'active') {
+          const hours = calculateDuration(appData.startTime);
+          if (hours >= 8) {
+            showToast('⚠️ 您的棉条已超时！请立即取出！', 'error');
+          } else if (hours >= 4) {
+            showToast('⏰ 您的棉条已使用 4 小时，请注意时间。', 'warning');
+          }
+        }
+      });
+    }
+
+    // ============================================
+    // 初始化
+    // ============================================
+    function init() {
+      loadData();
+      bindEvents();
+      checkRestoredState();
+      updateUI();
+      startReminderChecker();
+    }
+
+    // 启动应用
+    init();
+
+    // 启动计时器刷新（每 30 秒）
+    startTimerUpdater();
+
+    // 注册 Service Worker（用于 PWA 支持）
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {
+          // 忽略 Service Worker 注册失败
+        });
+      });
+    }
+  </script>
+</body>
+</html>
