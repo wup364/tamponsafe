@@ -1,11 +1,15 @@
 // TamponSafe Service Worker
 // 支持离线访问 PWA 应用
 
-const CACHE_NAME = 'tamponsafe-v3';
+const CACHE_NAME = 'tamponsafe-260412';
 const ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/icons/icon-192.svg',
+  '/icons/icon-512.svg',
+  '/js/app.js',
+  '/css/styles.css'
 ];
 
 // 安装 Service Worker

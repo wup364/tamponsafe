@@ -2,20 +2,20 @@
   "name": "TamponSafe - 卫生棉条防忘提醒",
   "short_name": "TamponSafe",
   "description": "卫生棉条使用记录与防忘提醒系统，保护您的健康",
-  "start_url": "/tamponsafe/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#fff5f8",
   "theme_color": "#ffffff",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>",
+      "src": "icons/icon-192.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>",
+      "src": "icons/icon-512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
