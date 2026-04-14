@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="卫生棉条使用记录与防忘提醒系统 - 保护您的健康">
   <title>TamponSafe - 卫生棉条防忘提醒</title>
-  <link rel="icon" href="icons/icon-192.svg?v=6">
-  <link rel="apple-touch-icon" href="icons/icon-512.svg?v=6">
-  <link rel="manifest" href="manifest.json?v=6">
-  <link rel="stylesheet" href="css/styles.css?v=6">
+  <link rel="icon" href="icons/icon-192.svg?v=260414">
+  <link rel="apple-touch-icon" href="icons/icon-512.svg?v=260414">
+  <link rel="manifest" href="manifest.json?v=260414">
+  <link rel="stylesheet" href="css/styles.css?v=260414">
 </head>
 <body>
   <div class="container">
@@ -77,13 +77,48 @@
       </div>
       
       <div class="history-list" id="historyList">
-        <div class="empty-history">
-          <span>📝</span>
-          <p>暂无历史记录</p>
-          <p style="font-size: 12px; margin-top: 8px;">记录将在这里显示</p>
+          <div class="empty-history">
+            <span>📝</span>
+            <p>暂无历史记录</p>
+            <p style="font-size: 12px; margin-top: 8px;">记录将在这里显示</p>
+          </div>
         </div>
-      </div>
-    </div>
+     </div>
+     
+      <!-- 编辑历史记录模态框 -->
+      <div class="modal-overlay" id="editHistoryModal">
+        <div class="modal">
+          <div class="modal-header">
+            <span style="font-size: 32px;">✏️</span>
+            <h3 class="modal-title">编辑记录</h3>
+          </div>
+          <div class="modal-body">
+            <p style="font-size: 13px; margin-bottom: 12px;">⏱️ 当前时长：<span id="editCurrentDuration" style="font-weight: 700; color: var(--primary);"></span></p>
+            
+            <div class="remove-confirm-section">
+              <p style="font-size: 13px; margin-bottom: 8px;">🏷️ 选择标签（可选）：</p>
+              <div class="tag-grid" id="editTagGrid"></div>
+            </div>
+
+            <div class="remove-confirm-section">
+              <p style="font-size: 13px; margin-bottom: 8px;">📝 备注（可选，最多 20 字）：</p>
+              <textarea 
+                class="note-input" 
+                id="editNoteInput" 
+                placeholder="输入您的感受或状态..." 
+                maxlength="20"
+                rows="2"
+              ></textarea>
+              <div class="note-char-count"><span id="editCharCount">0</span>/20</div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" id="saveEditBtn">保存修改</button>
+            <button class="btn btn-secondary" onclick="closeModal('editHistoryModal')">取消</button>
+            <button class="btn btn-danger" id="deleteHistoryBtn" style="margin-top: 10px;">🗑️ 删除记录</button>
+          </div>
+        </div>
+     </div>
 
     <div class="disclaimer">
       ⚠️ 免责声明：本工具仅为提醒辅助，不能替代医疗建议。如有不适请立即就医。<br>
@@ -292,6 +327,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="js/app.js?v=6"></script>
+  <script src="js/app.js?v=260414"></script>
 </body>
 </html>

@@ -401,6 +401,52 @@ h1 {
   color: var(--primary);
 }
 
+/* ========== 历史记录项按钮 ========== */
+.history-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--text-secondary);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-icon:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+.btn-icon.delete-btn:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.btn-icon.edit-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.history-content {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ========== 标签网格 ========== */
 .remove-confirm-section {
   margin-top: 16px;
@@ -429,7 +475,7 @@ h1 {
 }
 
 .tag-option:hover {
-  background: var(--primary-light);
+  background: #e8f4f8;
 }
 
 .tag-option.selected {

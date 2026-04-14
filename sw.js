@@ -1,7 +1,7 @@
 // TamponSafe Service Worker
 // 支持离线访问 PWA 应用
 
-const CACHE_NAME = 'tamponsafe-260412';
+const CACHE_NAME = 'tamponsafe-260414';
 const ASSETS = [
   '/',
   '/index.html',
