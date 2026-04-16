@@ -279,22 +279,43 @@ function updateUI() {
 
 /**
  * 更新统计数据 UI
- * 显示平均使用时长和记录总数
+ * 显示当日和累计的统计信息
  */
 function updateStatsUI() {
-  const avgDurationEl = document.getElementById('avgDuration');
-  if (!avgDurationEl) return;
+  const todayCountEl = document.getElementById('todayCount');
+  const todayAvgEl = document.getElementById('todayAvg');
+  const totalCountEl = document.getElementById('totalCount');
+  const totalAvgEl = document.getElementById('totalAvg');
+  
+  if (!todayCountEl || !todayAvgEl || !totalCountEl || !totalAvgEl) return;
   
   if (appData.history.length === 0) {
-    avgDurationEl.innerHTML = '<span style="font-size: 12px; color: var(--text-muted);">暂无记录</span>';
+    todayCountEl.textContent = '0';
+    todayAvgEl.textContent = '平均时长：-';
+    totalCountEl.textContent = '0';
+    totalAvgEl.textContent = '平均时长：-';
     return;
   }
   
-  const totalRecords = appData.history.length;
-  const totalHours = appData.history.reduce((sum, record) => sum + record.durationHours, 0);
-  const avgDuration = formatDuration(totalHours / totalRecords, true);
+  // 计算今日统计（从当天 00:00:00 到当前时间）
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartTimestamp = todayStart.getTime();
   
-  avgDurationEl.innerHTML = `<span style="font-size: 14px; font-weight: 700;">${avgDuration}</span><br><span style="font-size: 12px; color: var(--text-muted);">共 ${totalRecords} 条记录</span>`;
+  const todayRecords = appData.history.filter(record => record.start >= todayStartTimestamp);
+  const todayCount = todayRecords.length;
+  const todayTotalHours = todayRecords.reduce((sum, record) => sum + record.durationHours, 0);
+  const todayAvg = todayCount > 0 ? formatDuration(todayTotalHours / todayCount, true) : '-';
+  
+  // 计算累计统计
+  const totalCount = appData.history.length;
+  const totalHours = appData.history.reduce((sum, record) => sum + record.durationHours, 0);
+  const totalAvg = formatDuration(totalHours / totalCount, true);
+  
+  todayCountEl.textContent = todayCount;
+  todayAvgEl.textContent = todayCount > 0 ? `平均时长：${todayAvg}` : '平均时长：-';
+  totalCountEl.textContent = totalCount;
+  totalAvgEl.textContent = `平均时长：${totalAvg}`;
 }
 
 /**
@@ -731,6 +752,25 @@ function openEditHistoryModal(index) {
   
   document.getElementById('editCurrentDuration').textContent = formatDuration(record.durationHours);
   
+  // 设置开始日期显示（只读）
+  const startDate = new Date(record.start);
+  const startDateStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+  document.getElementById('editStartDateDisplay').textContent = startDateStr;
+  
+  // 设置开始时间输入框的值（可修改）
+  const editStartTimeOnlyInput = document.getElementById('editStartTimeOnlyInput');
+  const startTimeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+  editStartTimeOnlyInput.value = startTimeStr;
+  
+  // 监听开始时间变化，重新计算时长
+  editStartTimeOnlyInput.addEventListener('change', function() {
+    const [hours, minutes] = this.value.split(':').map(Number);
+    const newStart = new Date(record.start);
+    newStart.setHours(hours, minutes, 0, 0);
+    const durationHours = calculateDuration(newStart.getTime(), record.end);
+    document.getElementById('editCurrentDuration').textContent = formatDuration(durationHours);
+  });
+  
   const editTagGrid = document.getElementById('editTagGrid');
   editTagGrid.innerHTML = TAGS.map(tag => `
     <div class="tag-option" data-tag-id="${tag.id}">
@@ -787,6 +827,19 @@ function saveEditHistory() {
   }
   
   const record = appData.history[editingRecordIndex];
+  
+  // 更新开始时间（只修改时和分，日期固定）
+  const editStartTimeOnlyInput = document.getElementById('editStartTimeOnlyInput');
+  if (editStartTimeOnlyInput.value) {
+    const [hours, minutes] = editStartTimeOnlyInput.value.split(':').map(Number);
+    const newStart = new Date(record.start);
+    newStart.setHours(hours, minutes, 0, 0);
+    // 重新计算时长
+    const durationHours = calculateDuration(newStart.getTime(), record.end);
+    record.start = newStart.getTime();
+    record.durationHours = durationHours;
+  }
+  
   record.tags = editingSelectedTags;
   record.note = document.getElementById('editNoteInput').value.trim();
   record.lastEdited = new Date().toISOString();

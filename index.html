@@ -71,8 +71,18 @@
       <!-- 平均时长统计 -->
       <div class="stats-section" id="statsSection">
         <div class="stats-card">
-          <div class="stats-label">平均放置时长</div>
-          <div class="stats-value" id="avgDuration">-</div>
+          <div class="stats-value" style="font-size: 13px;">
+            <div style="margin-bottom: 6px;">
+              <span style="color: var(--primary);">📅 当日：</span>
+              <span id="todayCount">0</span>条 |
+              <span id="todayAvg" style="color: var(--text-secondary);">平均时长：-</span>
+            </div>
+            <div>
+              <span style="color: var(--primary);">📊 累计：</span>
+              <span id="totalCount">0</span>条 |
+              <span id="totalAvg" style="color: var(--text-secondary);">平均时长：-</span>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -95,6 +105,18 @@
           <div class="modal-body">
             <p style="font-size: 13px; margin-bottom: 12px;">⏱️ 当前时长：<span id="editCurrentDuration" style="font-weight: 700; color: var(--primary);"></span></p>
             
+            <div class="remove-confirm-section">
+              <p style="font-size: 13px; margin-bottom: 8px;">
+                📅 开始时间：<span id="editStartDateDisplay" style="font-weight: 700; color: var(--primary);"></span>
+              </p>
+              <input 
+                type="time" 
+                id="editStartTimeOnlyInput" 
+                style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--background); color: var(--text-primary);"
+              />
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">⚠️ 修改时间会重新计算使用时长</p>
+            </div>
+
             <div class="remove-confirm-section">
               <p style="font-size: 13px; margin-bottom: 8px;">🏷️ 选择标签（可选）：</p>
               <div class="tag-grid" id="editTagGrid"></div>
